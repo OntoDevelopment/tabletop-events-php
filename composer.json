@@ -1,5 +1,5 @@
 {
-    "name": "tabletop-events-php",
+    "name": "OntoDevelopment/tabletop-events-php",
     "require": {
         "php-curl-class/php-curl-class": "^8.5"
     },
