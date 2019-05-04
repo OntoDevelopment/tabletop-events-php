@@ -2,5 +2,6 @@
     "name": "tabletop-events-php",
     "require": {
         "php-curl-class/php-curl-class": "^8.5"
-    }
+    },
+    "version": "0.1.0"
 }
