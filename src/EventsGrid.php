@@ -2,19 +2,27 @@
 
 namespace TabletopEvents;
 
-class Grid {
+class EventsGrid {
 
     public $days = [];
     public $rooms = [];
     public $spaces = [];
+    public $events = [];
 
     public function __construct($SDK) {
-        foreach ($SDK->getRooms()->items as $Room) {
+        foreach ($SDK->public->getRooms()->items as $Room) {
             $Room->spaces = [];
-            foreach ($SDK->getRoomSpaces($Room->id)->items as $Space) {
+            foreach ($SDK->public->getRoomSpaces($Room->id)->items as $Space) {
                 $Room->spaces[$Space->id] = $Space;
                 //index
                 $this->spaces[$Space->id] = $Space;
+            }
+            
+            $Room->events = [];
+            foreach ($SDK->public->getRoomEvents($Room->id)->items as $Event) {
+                $Room->events[$Event->id] = $Event;
+                //index
+                $this->events[$Event->id] = $Event;
             }
             uasort($Room->spaces, [$this, 'sortSpaces']);
             $this->rooms[$Room->id] = $Room;
@@ -22,12 +30,12 @@ class Grid {
 
         uasort($this->spaces, [$this, 'sortSpaces']);
 
-        foreach ($SDK->getDays()->items as $Day) {
+        foreach ($SDK->public->getDays()->items as $Day) {
             $Day->spaces = [];
-            foreach ($SDK->getDaySlots($Day->id)->items as $Slot) {
+            foreach ($SDK->public->getDaySlots($Day->id)->items as $Slot) {
                 $Slot->colspan = 1;
                 if ($Slot->event_id) {
-                    $Slot->Event = $SDK->getEvent($Slot->event_id);
+                    $Slot->Event = $this->events[$Slot->event_id];
                 } else {
                     $Slot->Event = false;
                 }
@@ -37,7 +45,7 @@ class Grid {
                 }
                 $Day->spaces[$Slot->space_id]->slots[$Slot->id] = $Slot;
             }
-            $Day->parts = $SDK->getDayParts($Day->id)->items;
+            $Day->parts = $SDK->public->getDayParts($Day->id)->items;
             $Day->parts_count = count($Day->parts);
             $this->days[$Day->id] = $Day;
         }

@@ -1,0 +1,16 @@
+{
+  "name": "tabletop-events-php",
+  "version": "0.1.0",
+  "description": "PHP Libraries for the tabletop.events service.",
+  "main": "src/autoload.php",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OntoDevelopment/tabletop-events-php.git"
+  },
+  "author": "BrianWendt",
+  "license": "MIT License",
+  "bugs": {
+    "url": "https://github.com/OntoDevelopment/tabletop-events-php/issues"
+  },
+  "homepage": "https://github.com/OntoDevelopment/tabletop-events-php/PHP#readme"
+}
