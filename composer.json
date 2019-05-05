@@ -3,5 +3,10 @@
     "require": {
         "php-curl-class/php-curl-class": "^8.5"
     },
-    "version": "0.1.0"
+    "version": "0.1.0",
+    "autoload": {
+        "psr-4": {
+            "TabletopEvents\\": "src/"
+        }
+    }
 }
