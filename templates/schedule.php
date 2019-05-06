@@ -1,7 +1,6 @@
 <?php
-$EventsGrid = new TabletopEvents\EventsGrid($SDK);
 $days = $EventsGrid->days();
 foreach ($days as $Day) {
-    include '../templates/header.day.php';
-    include '../templates/table.day.php';
+    include 'header.day.php';
+    include 'table.day.php';
 } 
