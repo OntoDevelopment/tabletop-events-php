@@ -5,6 +5,7 @@ namespace TabletopEvents;
 class EventsGrid {
 
     public $days = [];
+    public $dayparts = [];
     public $rooms = [];
     public $spaces = [];
     public $events = [];
@@ -46,6 +47,9 @@ class EventsGrid {
                 $Day->spaces[$Slot->space_id]->slots[$Slot->id] = $Slot;
             }
             $Day->parts = $SDK->public->getDayParts($Day->id)->items;
+            foreach($Day->parts as $DayPart){
+                $this->dayparts[$DayPart->id] = $DayPart;
+            }
             $Day->parts_count = count($Day->parts);
             $this->days[$Day->id] = $Day;
         }
