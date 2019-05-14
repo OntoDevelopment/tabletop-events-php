@@ -9,9 +9,9 @@ require '../../tabletop-events-php.php';
         <title>Test</title>
     </head>
     <body>
-        <?php
+        <pre><?php
         $SDK = new TabletopEvents\SDK($convention_id);
-        include '../templates/schedule.php';
-        ?>
+        print_r($SDK->public->getLibraryGames(''));
+        ?></pre>
     </body>
 </html>
