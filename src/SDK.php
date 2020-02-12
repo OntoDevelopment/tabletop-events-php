@@ -160,7 +160,7 @@ class PublicSDK {
      * @return object endpoint results
      */
     public function getDays() {
-        return $this->SDK->get("convention/{$this->SDK->convention_id}/days");
+        return $this->SDK->get("convention/{$this->SDK->convention_id}/days", ['_order_by' => 'start_date']);
     }
 
     /**
