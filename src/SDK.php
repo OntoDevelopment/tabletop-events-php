@@ -211,7 +211,7 @@ class PublicSDK {
      * @return object endpoint results
      */
     public function getLibraryGames($library_id) {
-        return $this->SDK->get("library/{$library_id}/librarygames");
+        return $this->SDK->get("library/{$library_id}/librarygames", ['_order_by' => 'name']);
     }
 
     /**
