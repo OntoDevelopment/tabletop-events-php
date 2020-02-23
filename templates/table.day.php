@@ -1,5 +1,5 @@
 <div class="tte-grid-container">
-    <table class="tte-grid" id="table-<?= $Day->id ?>">
+    <table class="tte-grid" id="table-<?= $Day->start_date ?>">
         <thead>
             <tr>
                 <th class="tte-grid-header tte-grid-header-blank"></th>

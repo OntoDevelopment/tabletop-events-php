@@ -1,6 +1,6 @@
 {
   "name": "tabletop-events-php",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "PHP Libraries for the tabletop.events service.",
   "main": "src/autoload.php",
   "repository": {

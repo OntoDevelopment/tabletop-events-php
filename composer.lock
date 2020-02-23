@@ -1,24 +1,23 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "hash": "9bcb355782e42d1ea0ac867fd294c9eb",
-    "content-hash": "d61e47bb1f5fa4cdfc77577244a806aa",
+    "content-hash": "44362c74f2dd6e6bc3e3f68b34897e99",
     "packages": [
         {
             "name": "php-curl-class/php-curl-class",
-            "version": "8.5.1",
+            "version": "8.6.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/php-curl-class/php-curl-class.git",
-                "reference": "ff95a3c56f94f3bb91e5ac6aaa94b27f39d2a2b1"
+                "reference": "54be433a7299c15b024ba808e10a96c5d5791d99"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/php-curl-class/php-curl-class/zipball/ff95a3c56f94f3bb91e5ac6aaa94b27f39d2a2b1",
-                "reference": "ff95a3c56f94f3bb91e5ac6aaa94b27f39d2a2b1",
+                "url": "https://api.github.com/repos/php-curl-class/php-curl-class/zipball/54be433a7299c15b024ba808e10a96c5d5791d99",
+                "reference": "54be433a7299c15b024ba808e10a96c5d5791d99",
                 "shasum": ""
             },
             "require": {
@@ -72,7 +71,7 @@
                 "web-service",
                 "xml"
             ],
-            "time": "2019-04-20 05:57:47"
+            "time": "2019-11-17T08:37:31+00:00"
         }
     ],
     "packages-dev": [],

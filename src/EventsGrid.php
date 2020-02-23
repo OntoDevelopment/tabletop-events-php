@@ -2,96 +2,124 @@
 
 namespace TabletopEvents;
 
-class EventsGrid {
 
-    public $days = [];
-    public $dayparts = [];
-    public $rooms = [];
-    public $spaces = [];
+class EventsGrid
+{
+
+    public $slots = [];
     public $events = [];
+    public $rooms = [];
+    public $dayparts = [];
+    public $days = [];
 
-    public function __construct($SDK) {
-        foreach ($SDK->public->getRooms()->items as $Room) {
-            $Room->spaces = [];
-            foreach ($SDK->public->getRoomSpaces($Room->id)->items as $Space) {
-                $Room->spaces[$Space->id] = $Space;
-                //index
-                $this->spaces[$Space->id] = $Space;
-            }
-            
-            $Room->events = [];
-            foreach ($SDK->public->getRoomEvents($Room->id)->items as $Event) {
-                $Room->events[$Event->id] = $Event;
-                //index
-                $this->events[$Event->id] = $Event;
-            }
-            uasort($Room->spaces, [$this, 'sortSpaces']);
-            $this->rooms[$Room->id] = $Room;
+    public function __construct($SDK)
+    {
+        $slots = $SDK->public->getConventionSlots([
+            'event_id' => '>0',
+            '_order_by' => 'event.start_date',
+            '_include_related_objects' => ['event', 'daypart', 'conventionday', 'space']
+        ])->items;
+        foreach ($slots as $Slot) {
+            $this->slots[$Slot->id] = $Slot;
+            $this->events[$Slot->event_id] = $Slot->event;
         }
-
-        uasort($this->spaces, [$this, 'sortSpaces']);
-
-        foreach ($SDK->public->getDays()->items as $Day) {
-            $Day->spaces = [];
-            foreach ($SDK->public->getDaySlots($Day->id)->items as $Slot) {
-                $Slot->colspan = 1;
-                if ($Slot->event_id) {
-                    $Slot->Event = $this->events[$Slot->event_id];
-                } else {
-                    $Slot->Event = false;
-                }
-                if (!isset($Day->spaces[$Slot->space_id])) {
-                    $Day->spaces[$Slot->space_id] = $this->spaces[$Slot->space_id];
-                    $Day->spaces[$Slot->space_id]->slots = [];
-                }
-                $Day->spaces[$Slot->space_id]->slots[$Slot->id] = $Slot;
+        $dayparts = $SDK->public->getDayParts('start_date', [
+            '_include_related_objects' => ['conventionday']
+        ])->items;
+        foreach ($dayparts as $daypart) {
+            $this->dayparts[$daypart->id] = $daypart;
+        }
+        $this->days = $this->days();
+        $this->rooms = $this->rooms();
+        //var_dump($this->days); exit;
+        foreach ($this->dayparts as $daypart) {
+            if (!isset($this->days[$daypart->conventionday_id]->parts)) {
+                $this->days[$daypart->conventionday_id]->parts = [];
             }
-            $Day->parts = $SDK->public->getDayParts($Day->id)->items;
-            foreach($Day->parts as $DayPart){
-                $this->dayparts[$DayPart->id] = $DayPart;
-            }
-            $Day->parts_count = count($Day->parts);
-            $this->days[$Day->id] = $Day;
+            $this->days[$daypart->conventionday_id]->parts[$daypart->id] = $daypart;
         }
     }
 
-    public function days() {
+    private function days()
+    {
         $days = [];
-        foreach ($this->days as $Day) {
-            $days[$Day->id] = $this->day($Day->id);
+        foreach ($this->slots as $Slot) {
+            if (empty($Slot->conventionday)) {
+                continue;
+            }
+            $days[$Slot->conventionday->id] = $Slot->conventionday;
         }
+
         return $days;
     }
 
-    public function day($day_id) {
-        $Day = $this->days[$day_id];
-        $Day->rooms = [];
-        foreach ($Day->spaces as $Space) {
-            $Room = $this->rooms[$Space->room_id];
-            foreach($Room->spaces as $RSpace){
-                $event_id = 0;
-                $event_slot_id = false;
-                foreach($RSpace->slots as $Slot){
-                    if($event_slot_id && $event_id && $Slot->event_id === $event_id){
-                        
-                        $RSpace->slots[$event_slot_id]->colspan++;
-                        
-                        unset($RSpace->slots[$Slot->id]);
-                        
-                    } else {
-                        $event_id = $Slot->event_id;
-                        $event_slot_id = $Slot->id;
-                    }
-                }
-                $Room->spaces[$RSpace->id] = $RSpace;
+    private function rooms()
+    {
+        $rooms = [];
+        foreach ($this->slots as $Slot) {
+            if (!isset($rooms[$Slot->room_id])) {
+                $rooms[$Slot->room_id] = (object) [
+                    'id' => $Slot->room_id,
+                    'name' => '',
+                    'spaces' => [],
+                    'slots' => []
+                ];
             }
-            $Day->rooms[$Space->room_id] = $Room;
+            $rooms[$Slot->room_id]->slots[] = $Slot->id;
+            $rooms[$Slot->room_id]->spaces[$Slot->space_id] = $Slot->space;
+
+            if (!isset($rooms[$Slot->room_id]->spaces[$Slot->space_id]->slots)) {
+                $rooms[$Slot->room_id]->spaces[$Slot->space_id]->slots = [];
+            }
+            $rooms[$Slot->room_id]->spaces[$Slot->space_id]->slots[$Slot->id] = $Slot;
+
+            if (!empty($Slot->event)) {
+                $rooms[$Slot->room_id]->name = $Slot->event->room_name;
+            }
         }
-        return $Day;
+        return $rooms;
     }
 
-    public function sortSpaces($a, $b) {
+    public function getSpaceSlots($day_id, $space_id)
+    {
+        $Day = $this->days[$day_id];
+        $parts = $Day->parts;
+        $previous = false;
+        foreach ($Day->parts as $daypart_id => $Part) {
+            $Part->slot = $this->getSlot($daypart_id, $space_id);
+            if (isset($previous->slot->event->id) && isset($Part->slot->event->id) && $previous->slot->event->id == $Part->slot->event->id) {
+                $parts[$previous->id]->colspan++;
+                unset($parts[$daypart_id]);
+            } else {
+                $Part->colspan = 1;
+                $previous = $Part;
+                $parts[$daypart_id] = $Part;
+            }
+        }
+        return $parts;
+    }
+
+    public function getSlot($daypart_id, $space_id)
+    {
+        foreach ($this->slots as $Slot) {
+            if ($Slot->daypart_id == $daypart_id && $Slot->space_id == $space_id) {
+                return $Slot;
+            }
+        }
+        return false;
+    }
+
+    public function sortByName($a, $b)
+    {
         return strcmp($a->name, $b->name);
     }
 
+    public function timestamp($date)
+    {
+        $timestamp = new \DateTime($date, new \DateTimeZone('UTC'));
+        if (get_option('timezone_string')) {
+            $timestamp->setTimezone(new \DateTimeZone(get_option('timezone_string')));
+        }
+        return $timestamp;
+    }
 }

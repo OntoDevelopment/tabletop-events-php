@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This class provides simple access to the tabletop.events API public endpoints.
  * In the future it may include the endpoints requiring authorization (API Key).
@@ -13,7 +14,8 @@ namespace TabletopEvents;
 
 use \Curl\Curl;
 
-class SDK {
+class SDK
+{
 
     /**
      * @var string
@@ -26,22 +28,22 @@ class SDK {
      * @var boolean
      */
     public $skip_security = true;
-    
+
     /**
      * @var object[]
      */
     public $_stored = [];
-    
+
     /**
      * @var \TabletopEvents\PublicSDK
      */
     public $public;
-    
+
     /**
      * @var \Curl\Curl 
      */
     private $_curl;
-    
+
     /**
      * Base URL for the API endpoints
      * @var string
@@ -52,7 +54,8 @@ class SDK {
      * 
      * @param string $convention_id The tabletop.events convention id
      */
-    public function __construct($convention_id) {
+    public function __construct($convention_id)
+    {
         $this->_curl = new Curl();
         $this->_curl->setDefaultDecoder('json');
         $this->convention_id = $convention_id;
@@ -64,7 +67,8 @@ class SDK {
      * @param type $option
      * @param type $value
      */
-    public function setOpt($option, $value) {
+    public function setOpt($option, $value)
+    {
         $this->_curl->setOpt($option, $value);
     }
 
@@ -74,9 +78,10 @@ class SDK {
      * @param mixed[] $query
      * @return object API result
      */
-    public function get($endpoint, $query = []) {
+    public function get($endpoint, $query = [])
+    {
         $query['_items_per_page'] = 100;
-        $cache_key = $endpoint . '?' . http_build_query($query);
+        $cache_key = md5($endpoint . '?' . http_build_query($query));
         if (isset($this->_stored[$cache_key])) {
             //if the endpoint has been previously fetched, fetch it from the store
             return $this->_stored[$cache_key];
@@ -104,22 +109,24 @@ class SDK {
      * @param type $query
      * @return type
      */
-    private function _get($endpoint, $query = []) {
+    private function _get($endpoint, $query = [])
+    {
         if ($this->skip_security) {
             $this->_curl->setOpt(CURLOPT_SSL_VERIFYHOST, false);
             $this->_curl->setOpt(CURLOPT_SSL_VERIFYPEER, false);
         }
-        $this->_curl->get($this->_baseURL . $endpoint, $query);
+        $query_string = http_build_query_py($query);
+        $this->_curl->get($this->_baseURL . $endpoint, $query_string);
         if ($this->_curl->error) {
 
             return ["errorCode" => $this->_curl->errorCode, "errorMessage" => $this->_curl->errorMessage];
         }
         return $this->_curl->response;
     }
-
 }
 
-class PublicSDK {
+class PublicSDK
+{
 
     /**
      * @var \TabletopEvents\SDK
@@ -129,22 +136,38 @@ class PublicSDK {
     /**
      * @param \TabletopEvents\SDK $SDK instance of the SDK by reference
      */
-    public function __construct(&$SDK) {
+    public function __construct(&$SDK)
+    {
         $this->SDK = $SDK;
     }
 
     /**
      * @return object endpoint results
      */
-    public function getConvention() {
+    public function getConvention()
+    {
         return $this->SDK->get("convention/{$this->SDK->convention_id}");
+    }
+
+    /**
+     * @return object endpoint results
+     */
+    public function getConventionEvents()
+    {
+        return $this->SDK->get("convention/{$this->SDK->convention_id}/events");
+    }
+
+    public function getConventionSlots($params = [])
+    {
+        return $this->SDK->get("convention/{$this->SDK->convention_id}/slots", $params);
     }
 
     /**
      * @param string $badge_id Convention Badge ID
      * @return object endpoint results
      */
-    public function getBadge($badge_id) {
+    public function getBadge($badge_id)
+    {
         return $this->SDK->get("convention/{$badge_id}");
     }
 
@@ -152,41 +175,43 @@ class PublicSDK {
      * @param string $badge_id Convention Badge ID
      * @return object endpoint results
      */
-    public function getBadgeTickets($badge_id) {
+    public function getBadgeTickets($badge_id)
+    {
         return $this->SDK->get("convention/{$badge_id}/tickets");
     }
 
     /**
      * @return object endpoint results
      */
-    public function getDays() {
-        return $this->SDK->get("convention/{$this->SDK->convention_id}/days", ['_order_by' => 'start_date']);
+    public function getDays($order_by = 'start_date', $params = [])
+    {
+        $params['_order_by'] = $order_by;
+        return $this->SDK->get("convention/{$this->SDK->convention_id}/days", $params);
+    }
+
+    /**
+     * @return object endpoint results
+     */
+    public function getDayParts($order_by = 'start_date', $params = [])
+    {
+        $params['_order_by'] = $order_by;
+        return $this->SDK->get("convention/{$this->SDK->convention_id}/dayparts", $params);
     }
 
     /**
      * @param sting $day_id Convention Day ID
      * @return object endpoint results
      */
-    public function getDayParts($day_id) {
-        $dayparts = $this->SDK->get("conventionday/{$day_id}/dayparts");
-        foreach ($dayparts->items as $key => $DayPart) {
-            $dayparts->items[$key]->day_id = $day_id;
-        }
-        return $dayparts;
-    }
-
-    /**
-     * @param sting $day_id Convention Day ID
-     * @return object endpoint results
-     */
-    public function getDaySlots($day_id) {
+    public function getDaySlots($day_id)
+    {
         return $this->SDK->get("conventionday/{$day_id}/slots");
     }
 
     /**
      * @return object endpoint results
      */
-    public function getEventGrid() {
+    public function getEventGrid()
+    {
         return new Grid($this);
     }
 
@@ -194,7 +219,8 @@ class PublicSDK {
      * @param string $event_id Convention Event ID
      * @return object endpoint results
      */
-    public function getEvent($event_id) {
+    public function getEvent($event_id)
+    {
         return $this->SDK->get("event/{$event_id}");
     }
 
@@ -202,23 +228,27 @@ class PublicSDK {
      * @param string $library_id Library ID
      * @return object endpoint results
      */
-    public function getLibrary($library_id) {
+    public function getLibrary($library_id)
+    {
         return $this->SDK->get("library/{$library_id}");
     }
-    
+
     /**
      * @param string $library_id Library ID
      * @return object endpoint results
      */
-    public function getLibraryGames($library_id) {
-        return $this->SDK->get("library/{$library_id}/librarygames", ['_order_by' => 'name']);
+    public function getLibraryGames($library_id, $order_by = 'name', $params = [])
+    {
+        $params['_order_by'] = $order_by;
+        return $this->SDK->get("library/{$library_id}/librarygames", $params);
     }
 
     /**
      * @param string $room_id Convention Room ID
      * @return object endpoint results
      */
-    public function getRoom($room_id) {
+    public function getRoom($room_id)
+    {
         return $this->SDK->get("room/{$room_id}");
     }
 
@@ -226,7 +256,8 @@ class PublicSDK {
      * @param string $room_id Convention Room ID
      * @return object endpoint results
      */
-    public function getRoomEvents($room_id) {
+    public function getRoomEvents($room_id)
+    {
         return $this->SDK->get("room/{$room_id}/events");
     }
 
@@ -234,7 +265,8 @@ class PublicSDK {
      * @param string $room_id Convention Room ID
      * @return object endpoint results
      */
-    public function getRoomSlots($room_id) {
+    public function getRoomSlots($room_id)
+    {
         return $this->SDK->get("room/{$room_id}/slots");
     }
 
@@ -242,14 +274,16 @@ class PublicSDK {
      * @param string $room_id Convention Room ID
      * @return object endpoint results
      */
-    public function getRoomSpaces($room_id) {
+    public function getRoomSpaces($room_id)
+    {
         return $this->SDK->get("room/{$room_id}/spaces");
     }
 
     /**
      * @return object endpoint results
      */
-    public function getRooms() {
+    public function getRooms()
+    {
         return $this->SDK->get("convention/{$this->SDK->convention_id}/rooms");
     }
 
@@ -258,8 +292,25 @@ class PublicSDK {
      * @return string $last_name Last name on Convention Badge
      * @return object endpoint results
      */
-    public function findBadge($last_name) {
+    public function findBadge($last_name)
+    {
         return $this->SDK->get("convention/{$this->SDK->convention_id}/badges", ['query' => $last_name]);
     }
+}
 
+/*
+Python handles duplicate param keys different than PHP
+*/
+function http_build_query_py($params){
+    $query = [];
+    foreach($params as $key => $value){
+        if(is_array($value)){
+            foreach($value as $v){
+                $query[] = http_build_query([$key => $v]);
+            }
+        } else {
+            $query[] = http_build_query([$key => $value]);
+        }
+    }
+    return implode('&', $query);
 }
