@@ -38,6 +38,10 @@ class EventsGrid
             }
             $this->days[$daypart->conventionday_id]->parts[$daypart->id] = $daypart;
         }
+
+        foreach($this->days as $day_id => $Day){
+             uasort($this->days[$day_id]->parts, [$this, 'sortByStartDate']);
+        }
     }
 
     private function days()
@@ -112,6 +116,11 @@ class EventsGrid
     public function sortByName($a, $b)
     {
         return strcmp($a->name, $b->name);
+    }
+
+    public function sortByStartDate($a, $b)
+    {
+        return strcmp($a->start_date, $b->start_date);
     }
 
     public function timestamp($date)
